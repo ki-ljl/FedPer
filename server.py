@@ -10,6 +10,7 @@ import torch
 
 from client import train, test
 from model import ANN
+import copy
 
 
 class FedPer:
@@ -18,7 +19,8 @@ class FedPer:
         self.nn = ANN(args=self.args, name='server').to(args.device)
         self.nns = []
         for i in range(self.args.K):
-            temp = ANN(args=self.args, name=self.args.clients[i]).to(args.device)
+            temp = copy.deepcopy(self.nn)
+            temp.name = self.args.clients[i]
             self.nns.append(temp)
 
     def server(self):
@@ -27,7 +29,7 @@ class FedPer:
             # dispatch
             self.dispatch()
             # local updating
-            self.client_update(t)
+            self.client_update()
             # aggregation
             self.aggregation()
 
@@ -60,9 +62,9 @@ class FedPer:
                 if cnt == 2 * (self.args.total - self.args.Kp):
                     break
 
-    def client_update(self, global_round):  # update nn
+    def client_update(self):  # update nn
         for k in range(self.args.K):
-            self.nns[k] = train(self.args, self.nns[k], global_round)
+            self.nns[k] = train(self.args, self.nns[k])
 
     def global_test(self):
         for j in range(self.args.K):
