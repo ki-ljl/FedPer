@@ -23,6 +23,8 @@ class ANN(nn.Module):
         self.fc4 = nn.Linear(16, 1)
 
     def forward(self, data):
+        # print(data.shape)
+        data = data.view(data.shape[0], -1)
         x = self.fc1(data)
         x = self.sigmoid(x)
         x = self.fc2(x)

@@ -12,10 +12,10 @@ import torch
 def args_parser():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--E', type=int, default=20, help='number of rounds of training')
+    parser.add_argument('--E', type=int, default=15, help='number of rounds of training')
     parser.add_argument('--r', type=int, default=5, help='number of communication rounds')
     parser.add_argument('--K', type=int, default=10, help='number of total clients')
-    parser.add_argument('--input_dim', type=int, default=28, help='input dimension')
+    parser.add_argument('--input_dim', type=int, default=24 * 5, help='input dimension')
     parser.add_argument('--lr', type=float, default=0.08, help='learning rate')
     parser.add_argument('--C', type=float, default=1.0, help='sampling rate')
     parser.add_argument('--B', type=int, default=50, help='local batch size')

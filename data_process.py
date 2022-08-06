@@ -44,41 +44,46 @@ class MyDataset(Dataset):
 
 
 def nn_seq_wind(file_name, B):
-    # print('data processing...')
     data = load_data(file_name)
     columns = data.columns
-    wind = data[columns[2]]
-    wind = wind.tolist()
-    data = data.values.tolist()
-    X, Y = [], []
-    seq = []
-    for i in range(len(data) - 30):
-        train_seq = []
-        train_label = []
-        for j in range(i, i + 24):
-            train_seq.append(wind[j])
+    # wind = data[columns[2]]
 
-        for c in range(3, 7):
-            train_seq.append(data[i + 24][c])
-        train_label.append(wind[i + 24])
-        train_seq = torch.FloatTensor(train_seq).view(-1)
-        train_label = torch.FloatTensor(train_label).view(-1)
-        seq.append((train_seq, train_label))
+    train = data[:int(len(data) * 0.6)]
+    val = data[int(len(data) * 0.6):int(len(data) * 0.8)]
+    test = data[int(len(data) * 0.8):len(data)]
+    m, n = np.max(train[train.columns[2]]), np.min(train[train.columns[2]])
 
-    Dtr = seq[0:int(len(seq) * 0.8)]
-    Dte = seq[int(len(seq) * 0.8):len(seq)]
+    def process(dataset, batch_size, shuffle):
+        wind = dataset[dataset.columns[2]]
+        wind = (wind - n) / (m - n)
+        wind = wind.tolist()
+        dataset = dataset.values.tolist()
+        seq = []
+        for i in range(len(dataset) - 24):
+            train_seq = []
+            train_label = []
 
-    train_len = int(len(Dtr) / B) * B
-    test_len = int(len(Dte) / B) * B
-    Dtr, Dte = Dtr[:train_len], Dte[:test_len]
+            for j in range(i, i + 24):
+                x = [wind[j]]
+                for c in range(3, 7):
+                    x.append(dataset[j][c])
+                train_seq.append(x)
+            train_label.append(wind[i+24])
 
-    train = MyDataset(Dtr)
-    test = MyDataset(Dte)
+            train_seq = torch.FloatTensor(train_seq)
+            train_label = torch.FloatTensor(train_label).view(-1)
+            seq.append((train_seq, train_label))
 
-    Dtr = DataLoader(dataset=train, batch_size=B, shuffle=False, num_workers=0)
-    Dte = DataLoader(dataset=test, batch_size=B, shuffle=False, num_workers=0)
+        seq = MyDataset(seq)
+        seq = DataLoader(dataset=seq, batch_size=batch_size, shuffle=shuffle, num_workers=0, drop_last=True)
 
-    return Dtr, Dte
+        return seq
+
+    Dtr = process(train, B, shuffle=True)
+    Val = process(val, B, shuffle=True)
+    Dte = process(test, B, shuffle=False)
+
+    return Dtr, Val, Dte, m, n
 
 
 def get_mape(x, y):
